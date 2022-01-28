@@ -6,6 +6,9 @@ class ConvBlock(nn.Module):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
+                 kernel_size: int,
+                 padding: int,
+                 stride: int,
                  dilation: int,
                  norm=False,
                  dropout=0.) -> None:
@@ -14,6 +17,9 @@ class ConvBlock(nn.Module):
         Args:
             in_channels (int): input number of channels
             out_channels (int): output number of channels
+            kernel size (int): kernel size of the convolutional layer
+            padding (int): padding of the convolutional layer
+            stride (int): stride of the convolutional layer
             dilation (int): dilation of the convolutional layer
             norm (bool, optional): process batchnorm. Defaults to False.
             dropout (float, optional): dropout probability. Defaults to 0.
@@ -23,26 +29,14 @@ class ConvBlock(nn.Module):
         self.norm = norm
         self.conv = nn.Conv2d(in_channels=in_channels,
                               out_channels=out_channels,
-                              kernel_size=3,
+                              kernel_size=kernel_size,
                               dilation=dilation,
-                              padding=self.__get_padding(3, 1, dilation),
-                              stride=1)
+                              padding=padding,
+                              stride=stride)
 
         self.lr = nn.LeakyReLU(.2)
         self.bn = nn.BatchNorm1d(out_channels)
         self.dp = nn.Dropout(dropout)
-
-    def __get_padding(self, kernel_size, stride: int, dilation: int) -> int:
-        """Return size of the padding needed
-        Args:
-            kernel_size ([type]): kernel size of the convolutional layer
-            stride (int): stride of the convolutional layer
-            dilation (int): dilation of the convolutional layer
-        Returns:
-            int: padding
-        """
-        full_kernel = (kernel_size - 1) * dilation + 1
-        return full_kernel // 2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Compute forward pass 
