@@ -12,7 +12,7 @@ def test_upsampling():
     out_channels = 32
 
     in_c = torch.randn((batch_size, out_channels, w, l))
-    ctx = torch.randn((batch_size, out_channels, w, l))
+    ctx = torch.randn((batch_size, out_channels, w * 2, l * 2))
 
     assert UpBlock(in_channels, out_channels,
                    dilation=1)(in_c, ctx).shape == (batch_size, out_channels,
