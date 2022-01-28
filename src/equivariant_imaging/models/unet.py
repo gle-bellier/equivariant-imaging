@@ -3,6 +3,8 @@ import torch.nn as nn
 
 from equivariant_imaging.models.downsampling import DownBlock
 from equivariant_imaging.models.upsampling import UpBlock
+from equivariant_imaging.models.bottleneck import Bottleneck
+
 from equivariant_imaging.models.conv_block import ConvBlock
 
 
@@ -20,3 +22,21 @@ class Unet(nn.Module):
             UpBlock(in_c, out_c, dilation) for in_c, out_c, dilation in zip(
                 up_channels[:-1], up_channels[1:], up_dilations)
         ])
+
+        self.bottleneck = Bottleneck(down_channels[-1], down_channels[-1])
+
+    def forward(self, x):
+
+        l_ctx = []
+        for d_block in self.down_blocks:
+            x, ctx = d_block(x)
+            print(x.shape, ctx.shape)
+            l_ctx += [ctx]
+
+        x = self.bottleneck(x)
+
+        for i, u_block in enumerate(self.up_blocks):
+            print(x.shape, l_ctx[-i - 1].shape)
+            x = u_block(x, l_ctx[-i - 1])
+
+        return x

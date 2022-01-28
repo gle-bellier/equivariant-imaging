@@ -8,7 +8,9 @@ class UpBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dilation):
         super(UpBlock, self).__init__()
 
-        self.conv1 = ConvBlock(in_channels, out_channels, dilation=dilation)
+        self.conv1 = ConvBlock(in_channels * 2,
+                               out_channels,
+                               dilation=dilation)
         self.conv2 = ConvBlock(out_channels, out_channels, dilation=1)
         self.up = nn.Upsample(scale_factor=2)
 
