@@ -4,7 +4,7 @@ import torch
 from equivariant_imaging.models.conv_block import ConvBlock
 
 
-def test_dims_conv1d():
+def test_dims_conv2d():
     batch_size = 10
     in_channels = 32
     w, l = 32, 32
