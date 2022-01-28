@@ -14,10 +14,5 @@ def test_dims_conv2d():
 
     in_c = torch.randn((batch_size, in_channels, w, l))
 
-    assert ConvBlock(in_channels,
-                     out_channels,
-                     kernel_size,
-                     padding=3,
-                     stride=1,
-                     dilation=3)(in_c).shape == (batch_size, out_channels, w,
-                                                 l)
+    assert ConvBlock(in_channels, out_channels, kernel_size,
+                     3)(in_c).shape == (batch_size, out_channels, w, l)
