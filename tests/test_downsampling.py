@@ -12,7 +12,6 @@ def test_downsampling():
     out_channels = 64
 
     in_c = torch.randn((batch_size, in_channels, w, l))
-
-    assert DownBlock(in_channels, out_channels,
-                     dilation=1)(in_c).shape == (batch_size, out_channels,
-                                                 w // 2, l // 2)
+    out, ctx = DownBlock(in_channels, out_channels, dilation=1)(in_c)
+    assert out.shape == (batch_size, out_channels, w // 2, l // 2)
+    assert ctx.shape == (batch_size, out_channels, w, l)

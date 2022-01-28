@@ -16,4 +16,4 @@ class DownBlock(nn.Module):
 
         x = self.conv1(x)
         x = self.conv2(x)
-        return self.mp(x)
+        return self.mp(x), x
