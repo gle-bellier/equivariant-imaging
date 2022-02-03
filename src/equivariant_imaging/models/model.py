@@ -108,9 +108,15 @@ class EI(pl.LightningModule):
         """
         x, label = batch
         y, x1, x2, x3 = self(x)
+
         loss = self.__loss(y, x1, x2, x3)
 
+        # plot some images
         self.log("valid_loss", loss)
+        self.logger.experiment.add_image("original", x, self.val_idx)
+        self.logger.experiment.add_image("reconstruct", x1, self.val_idx)
+        self.val_idx += 1
+
         return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
 
     def configure_optimizers(self) -> Tuple:
