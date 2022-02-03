@@ -17,7 +17,7 @@ from equivariant_imaging.physics.cs import CS
 class EI(pl.LightningModule):
     def __init__(self, g_down_channels: List[int], g_up_channels: List[int],
                  g_down_dilations: List[int], g_up_dilations: List[int],
-                 criteron: float, lr: float):
+                 criteron: float, lr: float, alpha = 0.5):
         """[summary]
         Args:
             g_down_channels (List[int]): generator list of downsampling channels
@@ -42,6 +42,8 @@ class EI(pl.LightningModule):
 
         self.criteron = criteron
         self.val_idx = 0
+        
+        self.alpha = alpha
 
     def forward(self, y: torch.Tensor) -> torch.Tensor:
         """
