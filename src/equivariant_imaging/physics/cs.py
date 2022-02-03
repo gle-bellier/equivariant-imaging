@@ -8,7 +8,7 @@ import numpy as np
 # define an inverse problem e.g. Compressed Sensing (CS)
 # where the forward operator A is a random projection matrix
 class CS():
-    def __init__(self, d, D, img_shape, dtype=torch.float, device='cuda:0'):
+    def __init__(self, d, D, img_shape, dtype=torch.float, device='cpu'):
         self.img_shape = img_shape
         fname = 'data/matrices/cs_{}x{}.pt'.format(d, D)
         if os.path.exists(fname):
@@ -18,10 +18,15 @@ class CS():
             A_dagger = np.linalg.pinv(A)
             torch.save([A, A_dagger], fname)
             print('CS matrix has been created and saved at {}'.format(fname))
-        self._A = torch.from_numpy(A).type(dtype).to(device)
-        self._A_dagger = torch.from_numpy(A_dagger).type(dtype).to(device)
+        self._A = torch.from_numpy(A).float().to(device)
+        self._A_dagger = torch.from_numpy(A_dagger).float().to(device)
 
     def A(self, x):
+
+        print("X shape :", x.shape)
+        print("X reshape :", x.reshape(x.shape[0], -1).shape)
+        print("X shape :", self._A.shape)
+        input()
         y = torch.einsum('in, mn->im', x.reshape(x.shape[0], -1), self._A)
         return y
 

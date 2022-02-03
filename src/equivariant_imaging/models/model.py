@@ -38,22 +38,24 @@ class EI(pl.LightningModule):
         self.save_hyperparameters()
 
         # TODO : choose correct d and D and image shape
-        # instantiate compressed sensing
-        self.cs = CS(64, 256, [1, 16, 16])
-        # instantiate tranformation
-        self.T = Shift(n_trans=2)
 
         self.G = Unet(down_channels=g_down_channels,
                       up_channels=g_up_channels,
                       down_dilations=g_down_dilations,
                       up_dilations=g_up_dilations)
 
+        # instantiate compressed sensing
+
+        self.cs = CS(64, 28**2, [1, 28, 28])
+        # instantiate tranformation
+        self.T = Shift(n_trans=2)
+
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
         self.val_idx = 0
 
         self.alpha = alpha
-        
+
         self.batch_size = batch_size
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
@@ -84,7 +86,8 @@ class EI(pl.LightningModule):
             OrderedDict: dict {loss, progress_bar, log}
         """
 
-        y, x1, x2, x3 = self(batch)
+        x, label = batch
+        y, x1, x2, x3 = self(x)
         return self.__loss(y, x1, x2, x3)
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
@@ -93,8 +96,8 @@ class EI(pl.LightningModule):
             batch (torch.Tensor): batch
             batch_idx (int): batch index
         """
-
-        y, x1, x2, x3 = self(batch)
+        x, label = batch
+        y, x1, x2, x3 = self(x)
         return self.__loss(y, x1, x2, x3)
 
     def configure_optimizers(self) -> Tuple:
@@ -103,7 +106,7 @@ class EI(pl.LightningModule):
             Tuple(list): (list of optimizers, empty list) 
         """
 
-        opt = torch.optim.Adam(self.gen.parameters(),
+        opt = torch.optim.Adam(self.G.parameters(),
                                lr=self.hparams.lr,
                                betas=(0.5, 0.999))
 
@@ -145,8 +148,9 @@ if __name__ == "__main__":
                g_down_dilations=[1, 1],
                g_up_dilations=[1, 1, 1],
                lr=lr,
-               alpha=0.5)
+               alpha=0.5,
+               batch_size=8)
 
-    trainer = pl.Trainer(gpus=1, max_epochs=10000)
+    trainer = pl.Trainer(gpus=0, max_epochs=10000)
 
     trainer.fit(model)
