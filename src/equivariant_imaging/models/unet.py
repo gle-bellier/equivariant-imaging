@@ -25,6 +25,13 @@ class Unet(nn.Module):
 
         self.bottleneck = Bottleneck(down_channels[-1], down_channels[-1])
 
+        self.top = nn.Sequential(
+            nn.Conv2d(up_channels[-1],
+                      up_channels[-1],
+                      kernel_size=3,
+                      stride=1,
+                      padding=1), nn.Sigmoid())
+
     def forward(self, x):
 
         l_ctx = []
@@ -38,5 +45,5 @@ class Unet(nn.Module):
         for i, u_block in enumerate(self.up_blocks):
             #print(x.shape, l_ctx[-i - 1].shape)
             x = u_block(x, l_ctx[-i - 1])
-
+        x = self.top(x)
         return x
