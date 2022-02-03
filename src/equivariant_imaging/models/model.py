@@ -22,6 +22,7 @@ class EI(pl.LightningModule):
                  g_down_dilations: List[int],
                  g_up_dilations: List[int],
                  lr: float,
+                 norm=False,
                  alpha=0.5,
                  batch_size=64):
         """[summary]
@@ -41,7 +42,8 @@ class EI(pl.LightningModule):
         self.G = Unet(down_channels=g_down_channels,
                       up_channels=g_up_channels,
                       down_dilations=g_down_dilations,
-                      up_dilations=g_up_dilations)
+                      up_dilations=g_up_dilations,
+                      norm=norm)
 
         # instantiate compressed sensing
 
