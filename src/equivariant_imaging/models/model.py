@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 
 from equivariant_imaging.models.unet import Unet
+from equivariant_imaging.physics.cs import CS
 
 
 class EI(pl.LightningModule):
@@ -25,18 +26,23 @@ class EI(pl.LightningModule):
 
         self.save_hyperparameters()
 
-        self.gen = Unet(down_channels=g_down_channels,
-                        up_channels=g_up_channels,
-                        down_dilations=g_down_dilations,
-                        up_dilations=g_up_dilations)
+        # TODO : choose correct d and D and image shape
+        # instantiate compressed sensing
+        self.cs = CS(64, 256, [1, 16, 16])
+
+        self.G = Unet(down_channels=g_down_channels,
+                      up_channels=g_up_channels,
+                      down_dilations=g_down_dilations,
+                      up_dilations=g_up_dilations)
 
         self.criteron = criteron
         self.val_idx = 0
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, y: torch.Tensor) -> torch.Tensor:
         """
+        Compute pass forward
         """
-        pass
+        return self.G(self.cs.A_dagger(y))
 
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
@@ -48,6 +54,14 @@ class EI(pl.LightningModule):
         Returns:
             OrderedDict: dict {loss, progress_bar, log}
         """
+        # TODO : get image from batch
+        x = batch[0]
+
+        # compute compressed version of x
+        y = self.cs.A(x)
+
+        # training routine
+        x1 = self(y)
 
         pass
 
