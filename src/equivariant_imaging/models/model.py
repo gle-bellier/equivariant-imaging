@@ -144,7 +144,9 @@ class EI(pl.LightningModule):
                             train=True,
                             download=True,
                             transform=transform)
-        return DataLoader(mnist_train, batch_size=self.batch_size)
+        return DataLoader(mnist_train,
+                          batch_size=self.batch_size,
+                          shuffle=True)
 
     def val_dataloader(self):
         transform = transforms.Compose([
