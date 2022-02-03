@@ -125,9 +125,7 @@ class EI(pl.LightningModule):
             Tuple(list): (list of optimizers, empty list) 
         """
 
-        opt = torch.optim.Adam(self.G.parameters(),
-                               lr=self.hparams.lr,
-                               betas=(0.5, 0.999))
+        opt = torch.optim.Adam(self.G.parameters(), lr=self.hparams.lr)
 
         return opt
 
