@@ -8,8 +8,10 @@ import numpy as np
 # define an inverse problem e.g. Compressed Sensing (CS)
 # where the forward operator A is a random projection matrix
 class CS():
-    def __init__(self, d, D, img_shape, dtype=torch.float, device='cpu'):
+    def __init__(self, d, D, img_shape, dtype=torch.float):
         self.img_shape = img_shape
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         fname = 'data/matrices/cs_{}x{}.pt'.format(d, D)
         if os.path.exists(fname):
             A, A_dagger = torch.load(fname)
