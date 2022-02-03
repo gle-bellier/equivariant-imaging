@@ -30,13 +30,13 @@ class Unet(nn.Module):
         l_ctx = []
         for d_block in self.down_blocks:
             x, ctx = d_block(x)
-            print(x.shape, ctx.shape)
+            #print(x.shape, ctx.shape)
             l_ctx += [ctx]
 
         x = self.bottleneck(x)
 
         for i, u_block in enumerate(self.up_blocks):
-            print(x.shape, l_ctx[-i - 1].shape)
+            #print(x.shape, l_ctx[-i - 1].shape)
             x = u_block(x, l_ctx[-i - 1])
 
         return x

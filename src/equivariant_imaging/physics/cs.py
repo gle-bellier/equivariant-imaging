@@ -23,10 +23,6 @@ class CS():
 
     def A(self, x):
 
-        print("X shape :", x.shape)
-        print("X reshape :", x.reshape(x.shape[0], -1).shape)
-        print("X shape :", self._A.shape)
-        input()
         y = torch.einsum('in, mn->im', x.reshape(x.shape[0], -1), self._A)
         return y
 

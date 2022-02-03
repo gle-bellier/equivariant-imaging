@@ -30,7 +30,6 @@ class EI(pl.LightningModule):
             g_up_channels (List[int]): generator list of upsampling channels
             g_down_dilations (List[int]): generator list of down blocks dilations
             g_up_dilations (List[int]): generator list of up blocks dilations
-            criteron (float): criteron for both generator and discriminator
             lr (float): learning rate
         """
         super(EI, self).__init__()
@@ -65,15 +64,23 @@ class EI(pl.LightningModule):
         y = self.cs.A(x)
 
         # training routine
+
         x1 = self.f(y)
         x2 = self.T.apply(x1)
-        x3 = self.f(self.cs.A(x))
+        x3 = self.f(self.cs.A(x2))
+
+        # print(
+        #     f"y : {y.shape}\n x1 : {x1.shape}\n x1 Transformed: {self.cs.A(x1).shape}\n x2 : {x2.shape}\n x3 : {x3.shape}\n"
+        # )
+        # input()
 
         return y, x1, x2, x3
 
     def __loss(self, y, x1, x2, x3):
-        return torch.nn.MSE(self.cs.A(x1),
-                            y) + self.alpha * torch.nn.MSE(x3, x2)
+
+        return torch.nn.functional.mse_loss(
+            self.cs.A(x1),
+            y) + self.alpha * torch.nn.functional.mse_loss(x3, x2)
 
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
@@ -143,9 +150,9 @@ if __name__ == "__main__":
 
     lr = 1e-3
     # init model
-    model = EI(g_down_channels=[2, 8, 16],
-               g_up_channels=[16, 8, 4, 2],
-               g_down_dilations=[1, 1],
+    model = EI(g_down_channels=[1, 4, 8],
+               g_up_channels=[8, 4, 1],
+               g_down_dilations=[1, 1, 1],
                g_up_dilations=[1, 1, 1],
                lr=lr,
                alpha=0.5,
