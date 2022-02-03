@@ -10,7 +10,7 @@ import numpy as np
 class CS():
     def __init__(self, d, D, img_shape, dtype=torch.float, device='cuda:0'):
         self.img_shape = img_shape
-        fname = './data/matrices/cs_{}x{}.pt'.format(d, D)
+        fname = 'data/matrices/cs_{}x{}.pt'.format(d, D)
         if os.path.exists(fname):
             A, A_dagger = torch.load(fname)
         else:

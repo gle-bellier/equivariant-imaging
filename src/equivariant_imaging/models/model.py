@@ -21,7 +21,6 @@ class EI(pl.LightningModule):
                  g_up_channels: List[int],
                  g_down_dilations: List[int],
                  g_up_dilations: List[int],
-                 criteron: float,
                  lr: float,
                  alpha=0.5):
         """[summary]
@@ -50,12 +49,11 @@ class EI(pl.LightningModule):
 
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
-        self.criteron = criteron
         self.val_idx = 0
 
         self.alpha = alpha
 
-    def forward(self, x: torch.Tensor) -> Tuple(torch.Tensor):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
         Compute pass forward
         """
@@ -139,10 +137,10 @@ if __name__ == "__main__":
 
     lr = 1e-3
     # init model
-    model = EI(g_down_channels=[2, 32, 64, 128],
-               g_up_channels=[512, 128, 64, 32, 2],
-               g_down_dilations=[3, 1, 1, 1],
-               g_up_dilations=[3, 1, 1, 1, 1],
+    model = EI(g_down_channels=[2, 8, 16],
+               g_up_channels=[16, 8, 4, 2],
+               g_down_dilations=[1, 1],
+               g_up_dilations=[1, 1, 1],
                lr=lr,
                alpha=0.5)
 
