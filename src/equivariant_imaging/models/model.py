@@ -47,7 +47,7 @@ class EI(pl.LightningModule):
 
         # instantiate compressed sensing
 
-        self.cs = CS(64, 32**2, [1, 32, 32])
+        self.cs = CS(512, 32**2, [1, 32, 32])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
 
