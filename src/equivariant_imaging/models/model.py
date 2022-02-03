@@ -16,9 +16,14 @@ from equivariant_imaging.transforms.random_shift import Shift
 
 
 class EI(pl.LightningModule):
-    def __init__(self, g_down_channels: List[int], g_up_channels: List[int],
-                 g_down_dilations: List[int], g_up_dilations: List[int],
-                 criteron: float, lr: float, alpha = 0.5):
+    def __init__(self,
+                 g_down_channels: List[int],
+                 g_up_channels: List[int],
+                 g_down_dilations: List[int],
+                 g_up_dilations: List[int],
+                 criteron: float,
+                 lr: float,
+                 alpha=0.5):
         """[summary]
         Args:
             g_down_channels (List[int]): generator list of downsampling channels
@@ -47,7 +52,7 @@ class EI(pl.LightningModule):
 
         self.criteron = criteron
         self.val_idx = 0
-        
+
         self.alpha = alpha
 
     def forward(self, x: torch.Tensor) -> Tuple(torch.Tensor):
@@ -63,6 +68,10 @@ class EI(pl.LightningModule):
 
         return y, x1, x2, x3
 
+    def __loss(self, y, x1, x2, x3):
+        return torch.nn.MSE(self.cs.A(x1),
+                            y) + self.alpha * torch.nn.MSE(x3, x2)
+
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
         """Compute a training step for generator or discriminator 
@@ -73,12 +82,9 @@ class EI(pl.LightningModule):
         Returns:
             OrderedDict: dict {loss, progress_bar, log}
         """
-        # TODO : get image from batch
-        x = batch
 
-        # compute compressed version of x
-
-        pass
+        y, x1, x2, x3 = self(batch)
+        return self.__loss(y, x1, x2, x3)
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
         """Compute validation step (do some logging)
@@ -86,9 +92,9 @@ class EI(pl.LightningModule):
             batch (torch.Tensor): batch
             batch_idx (int): batch index
         """
-        self.val_idx += 1
-        if self.val_idx % 10 == 0:
-            pass
+
+        y, x1, x2, x3 = self(batch)
+        return self.__loss(y, x1, x2, x3)
 
     def configure_optimizers(self) -> Tuple:
         """Configure both generator and discriminator optimizers
@@ -137,7 +143,8 @@ if __name__ == "__main__":
                g_up_channels=[512, 128, 64, 32, 2],
                g_down_dilations=[3, 1, 1, 1],
                g_up_dilations=[3, 1, 1, 1, 1],
-               lr=lr)
+               lr=lr,
+               alpha=0.5)
 
     trainer = pl.Trainer(gpus=1, max_epochs=10000)
 
