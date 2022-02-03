@@ -23,7 +23,8 @@ class EI(pl.LightningModule):
                  g_up_dilations: List[int],
                  criteron: float,
                  lr: float,
-                 alpha=0.5):
+                 alpha=0.5,
+                 batch_size=64):
         """[summary]
         Args:
             g_down_channels (List[int]): generator list of downsampling channels
@@ -54,6 +55,8 @@ class EI(pl.LightningModule):
         self.val_idx = 0
 
         self.alpha = alpha
+        
+        self.batch_size = batch_size
 
     def forward(self, x: torch.Tensor) -> Tuple(torch.Tensor):
         """
@@ -120,7 +123,7 @@ class EI(pl.LightningModule):
                             train=True,
                             download=True,
                             transform=transform)
-        return DataLoader(mnist_train, batch_size=64)
+        return DataLoader(mnist_train, batch_size=self.batch_size)
 
     def val_dataloader(self):
         transform = transforms.Compose([
@@ -131,7 +134,7 @@ class EI(pl.LightningModule):
                           train=False,
                           download=True,
                           transform=transform)
-        return DataLoader(mnist_val, batch_size=64)
+        return DataLoader(mnist_val, batch_size=self.batch_size)
 
 
 if __name__ == "__main__":
