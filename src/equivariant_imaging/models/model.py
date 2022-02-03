@@ -98,7 +98,7 @@ class EI(pl.LightningModule):
         loss = self.__loss(y, x1, x2, x3)
 
         self.log("train_loss", loss)
-        return dict(loss=loss, log=dict(train_loss=loss))
+        return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
         """Compute validation step (do some logging)
@@ -111,7 +111,7 @@ class EI(pl.LightningModule):
         loss = self.__loss(y, x1, x2, x3)
 
         self.log("valid_loss", loss)
-        return dict(validation_loss=loss, log=dict(val_loss=loss))
+        return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
 
     def configure_optimizers(self) -> Tuple:
         """Configure both generator and discriminator optimizers
