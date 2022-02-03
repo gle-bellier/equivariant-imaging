@@ -14,13 +14,15 @@ class Unet(nn.Module):
         super(Unet, self).__init__()
 
         self.down_blocks = nn.ModuleList([
-            DownBlock(in_c, out_c, dilation) for in_c, out_c, dilation in zip(
-                down_channels[:-1], down_channels[1:], down_dilations)
+            DownBlock(in_c, out_c, dilation, norm=True)
+            for in_c, out_c, dilation in zip(down_channels[:-1],
+                                             down_channels[1:], down_dilations)
         ])
 
         self.up_blocks = nn.ModuleList([
-            UpBlock(in_c, out_c, dilation) for in_c, out_c, dilation in zip(
-                up_channels[:-1], up_channels[1:], up_dilations)
+            UpBlock(in_c, out_c, dilation,
+                    norm=True) for in_c, out_c, dilation in zip(
+                        up_channels[:-1], up_channels[1:], up_dilations)
         ])
 
         self.bottleneck = Bottleneck(down_channels[-1], down_channels[-1])
