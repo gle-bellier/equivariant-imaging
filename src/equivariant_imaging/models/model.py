@@ -45,7 +45,7 @@ class EI(pl.LightningModule):
 
         # instantiate compressed sensing
 
-        self.cs = CS(64, 28**2, [1, 28, 28])
+        self.cs = CS(64, 32**2, [1, 32, 32])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
 
@@ -135,6 +135,7 @@ class EI(pl.LightningModule):
         # transforms
         # prepare transforms standard to MNIST
         transform = transforms.Compose([
+            transforms.Resize(32),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ])
@@ -147,6 +148,7 @@ class EI(pl.LightningModule):
 
     def val_dataloader(self):
         transform = transforms.Compose([
+            transforms.Resize(32),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ])
@@ -162,10 +164,10 @@ if __name__ == "__main__":
 
     lr = 1e-3
     # init model
-    model = EI(g_down_channels=[1, 4, 8],
-               g_up_channels=[8, 4, 1],
-               g_down_dilations=[1, 1, 1],
-               g_up_dilations=[1, 1, 1],
+    model = EI(g_down_channels=[1, 2, 2, 4, 8],
+               g_up_channels=[8, 4, 2, 2, 1],
+               g_down_dilations=[1, 1, 1, 1],
+               g_up_dilations=[1, 1, 1, 1],
                lr=lr,
                alpha=0.5,
                batch_size=8)
