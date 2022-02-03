@@ -97,9 +97,15 @@ class EI(pl.LightningModule):
 
         x, label = batch
         y, x1, x2, x3 = self(x)
+
         loss = self.__loss(y, x1, x2, x3)
 
         self.log("train_loss", loss)
+        self.logger.experiment.add_image("train/original", x[0], self.val_idx)
+        self.logger.experiment.add_image("train/reconstruct", x1[0],
+                                         self.val_idx)
+        self.val_idx += 1
+
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
@@ -115,8 +121,9 @@ class EI(pl.LightningModule):
 
         # plot some images
         self.log("val_loss", loss)
-        self.logger.experiment.add_image("original", x[0], self.val_idx)
-        self.logger.experiment.add_image("reconstruct", x1[0], self.val_idx)
+        self.logger.experiment.add_image("valid/original", x[0], self.val_idx)
+        self.logger.experiment.add_image("valid/reconstruct", x1[0],
+                                         self.val_idx)
         self.val_idx += 1
 
         return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
