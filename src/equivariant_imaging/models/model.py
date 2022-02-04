@@ -53,6 +53,13 @@ class EI(pl.LightningModule):
 
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
+        # define transformation
+        self.transform = transforms.Compose([
+            transforms.Resize(32),
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307, ), (0.3081, ))
+        ])
+
         self.val_idx = 0
 
         self.alpha = alpha
@@ -146,32 +153,21 @@ class EI(pl.LightningModule):
         return opt
 
     def train_dataloader(self):
-        # transforms
-        # prepare transforms standard to MNIST
-        self.transform = transforms.Compose([
-            transforms.Resize(32),
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
-        ])
         # data
         mnist_train = MNIST('./data/',
                             train=True,
                             download=True,
-                            transform=transform)
+                            transform=self.transform)
         return DataLoader(mnist_train,
                           batch_size=self.batch_size,
                           shuffle=True)
 
     def val_dataloader(self):
-        self.transform = transforms.Compose([
-            transforms.Resize(32),
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
-        ])
+
         mnist_val = MNIST('./data/',
                           train=False,
                           download=True,
-                          transform=transform)
+                          transform=self.transform)
         return DataLoader(mnist_val, batch_size=self.batch_size)
 
 
