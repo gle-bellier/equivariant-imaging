@@ -65,6 +65,13 @@ class EI(pl.LightningModule):
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ])
+        
+        self.invtransform = transforms.Compose([
+            transforms.Normalize((0, ), (1/0.3081, )),
+            transforms.Normalize((-0.1307,),(1,)),
+            transforms.Resize(28),
+            transforms.ToTensor()
+        ])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
@@ -108,8 +115,8 @@ class EI(pl.LightningModule):
         loss = self.__loss(y, x1, x2, x3)
 
         self.log("train_loss", loss)
-        self.logger.experiment.add_image("train/original", x[0], self.val_idx)
-        self.logger.experiment.add_image("train/reconstruct", x1[0],
+        self.logger.experiment.add_image("train/original", self.invtransform(x[0]), self.val_idx)
+        self.logger.experiment.add_image("train/reconstruct", self.invtransform(x1[0]),
                                          self.val_idx)
         self.val_idx += 1
 
@@ -128,8 +135,8 @@ class EI(pl.LightningModule):
 
         # plot some images
         self.log("val_loss", loss)
-        self.logger.experiment.add_image("valid/original", x[0], self.val_idx)
-        self.logger.experiment.add_image("valid/reconstruct", x1[0],
+        self.logger.experiment.add_image("valid/original", self.invtransform(x[0]), self.val_idx)
+        self.logger.experiment.add_image("valid/reconstruct", self.invtransform(x1[0]),
                                          self.val_idx)
         self.val_idx += 1
 
