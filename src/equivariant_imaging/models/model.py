@@ -157,7 +157,7 @@ class EI(pl.LightningModule):
         mnist_train = MNIST('./data/',
                             train=True,
                             download=True,
-                            transform=transform)
+                            transform=self.transform)
         return DataLoader(mnist_train,
                           batch_size=self.batch_size,
                           shuffle=True)
@@ -171,7 +171,7 @@ class EI(pl.LightningModule):
         mnist_val = MNIST('./data/',
                           train=False,
                           download=True,
-                          transform=transform)
+                          transform=self.transform)
         return DataLoader(mnist_val, batch_size=self.batch_size)
 
 
