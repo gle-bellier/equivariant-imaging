@@ -69,8 +69,7 @@ class EI(pl.LightningModule):
         self.invtransform = transforms.Compose([
             transforms.Normalize((0, ), (1/0.3081, )),
             transforms.Normalize((-0.1307,),(1,)),
-            transforms.Resize(28),
-            transforms.ToTensor()
+            transforms.Resize(28)
         ])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
