@@ -100,7 +100,10 @@ class EI(pl.LightningModule):
 
         loss = self.__loss(y, x1, x2, x3)
 
-        self.log("train_loss", loss)
+        x_sample = self.transform.inverse_transform(x[0])
+        x1_sample = self.transform.inverse_transform(x1[0])
+
+        self.log("train/train_loss", loss)
         self.logger.experiment.add_image("train/original", x[0], self.val_idx)
         self.logger.experiment.add_image("train/reconstruct", x1[0],
                                          self.val_idx)
@@ -119,10 +122,14 @@ class EI(pl.LightningModule):
 
         loss = self.__loss(y, x1, x2, x3)
 
+        x_sample = self.transform.inverse_transform(x[0])
+        x1_sample = self.transform.inverse_transform(x1[0])
+
         # plot some images
-        self.log("val_loss", loss)
-        self.logger.experiment.add_image("valid/original", x[0], self.val_idx)
-        self.logger.experiment.add_image("valid/reconstruct", x1[0],
+        self.log("valid/val_loss", loss)
+        self.logger.experiment.add_image("valid/original", x_sample,
+                                         self.val_idx)
+        self.logger.experiment.add_image("valid/reconstruct", x1_sample,
                                          self.val_idx)
         self.val_idx += 1
 
@@ -141,7 +148,7 @@ class EI(pl.LightningModule):
     def train_dataloader(self):
         # transforms
         # prepare transforms standard to MNIST
-        transform = transforms.Compose([
+        self.transform = transforms.Compose([
             transforms.Resize(32),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
@@ -156,7 +163,7 @@ class EI(pl.LightningModule):
                           shuffle=True)
 
     def val_dataloader(self):
-        transform = transforms.Compose([
+        self.transform = transforms.Compose([
             transforms.Resize(32),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
