@@ -113,7 +113,7 @@ class EI(pl.LightningModule):
 
         loss = self.__loss(y, x1, x2, x3)
 
-        self.log("train_loss", loss)
+        self.log("train/train_loss", loss)
         self.logger.experiment.add_image("train/original", self.invtransform(x[0]), self.val_idx)
         self.logger.experiment.add_image("train/reconstruct", self.invtransform(x1[0]),
                                          self.val_idx)
@@ -134,7 +134,7 @@ class EI(pl.LightningModule):
         loss = self.__loss(y, x1, x2, x3)
 
         # plot some images
-        self.log("val_loss", loss)
+        self.log("valid/val_loss", loss)
         self.logger.experiment.add_image("valid/original", self.invtransform(x[0]), self.val_idx)
         self.logger.experiment.add_image("valid/reconstruct", self.invtransform(x1[0]),
                                          self.val_idx)
