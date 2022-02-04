@@ -23,7 +23,9 @@ class EI(pl.LightningModule):
                  g_up_dilations: List[int],
                  lr: float,
                  norm=False,
-                 alpha=0.5,
+                 compress_size=512,
+                 original_size=32,
+                 alpha=10,                 
                  batch_size=64):
         """[summary]
         Args:
@@ -44,10 +46,13 @@ class EI(pl.LightningModule):
                       down_dilations=g_down_dilations,
                       up_dilations=g_up_dilations,
                       norm=norm)
+        
+        self.original_size = original_size
+        self.compress_size = compress_size
 
         # instantiate compressed sensing
 
-        self.cs = CS(512, 32**2, [1, 32, 32])
+        self.cs = CS(compress_size, original_size**2, [1, original_size, original_size])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
 
@@ -142,7 +147,7 @@ class EI(pl.LightningModule):
         # transforms
         # prepare transforms standard to MNIST
         transform = transforms.Compose([
-            transforms.Resize(32),
+            transforms.Resize(self.original_size),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ])
@@ -157,7 +162,7 @@ class EI(pl.LightningModule):
 
     def val_dataloader(self):
         transform = transforms.Compose([
-            transforms.Resize(32),
+            transforms.Resize(self.original_size),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ])
