@@ -58,6 +58,19 @@ class EI(pl.LightningModule):
         self.alpha = alpha
 
         self.batch_size = batch_size
+        
+        #Transform to resize the image and normalize
+        self.transform = transforms.Compose([
+            transforms.Resize(32),
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307, ), (0.3081, ))
+        ])
+        
+        self.invtransform = transforms.Compose([
+            transforms.Normalize((0, ), (1/0.3081, )),
+            transforms.Normalize((-0.1307,),(1,)),
+            transforms.Resize(28)
+        ])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
@@ -101,8 +114,8 @@ class EI(pl.LightningModule):
         loss = self.__loss(y, x1, x2, x3)
 
         self.log("train/train_loss", loss)
-        self.logger.experiment.add_image("train/original", x[0], self.val_idx)
-        self.logger.experiment.add_image("train/reconstruct", x1[0],
+        self.logger.experiment.add_image("train/original", self.invtransform(x[0]), self.val_idx)
+        self.logger.experiment.add_image("train/reconstruct", self.invtransform(x1[0]),
                                          self.val_idx)
         self.val_idx += 1
 
@@ -121,8 +134,8 @@ class EI(pl.LightningModule):
 
         # plot some images
         self.log("valid/val_loss", loss)
-        self.logger.experiment.add_image("valid/original", x[0], self.val_idx)
-        self.logger.experiment.add_image("valid/reconstruct", x1[0],
+        self.logger.experiment.add_image("valid/original", self.invtransform(x[0]), self.val_idx)
+        self.logger.experiment.add_image("valid/reconstruct", self.invtransform(x1[0]),
                                          self.val_idx)
         self.val_idx += 1
 
@@ -139,32 +152,21 @@ class EI(pl.LightningModule):
         return opt
 
     def train_dataloader(self):
-        # transforms
-        # prepare transforms standard to MNIST
-        transform = transforms.Compose([
-            transforms.Resize(32),
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
-        ])
-        # data
+        
         mnist_train = MNIST('./data/',
                             train=True,
                             download=True,
-                            transform=transform)
+                            transform=self.transform)
         return DataLoader(mnist_train,
                           batch_size=self.batch_size,
                           shuffle=True)
 
     def val_dataloader(self):
-        transform = transforms.Compose([
-            transforms.Resize(32),
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
-        ])
+        
         mnist_val = MNIST('./data/',
                           train=False,
                           download=True,
-                          transform=transform)
+                          transform=self.transform)
         return DataLoader(mnist_val, batch_size=self.batch_size)
 
 
