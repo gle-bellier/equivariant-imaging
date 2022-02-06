@@ -171,7 +171,7 @@ class EI(pl.LightningModule):
         return {
             'optimizer': opt,
             'lr_scheduler': sc,
-            "monitor": "metric_to_track"
+            "monitor": "train/train_loss"
         }
 
     def train_dataloader(self):
