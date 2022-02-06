@@ -61,7 +61,7 @@ class EI(pl.LightningModule):
         self.batch_size = batch_size
 
         #Transform to resize the image and normalize
-        self.transform = transforms.Sequential([
+        self.transform = transforms.Compose([
             transforms.Pad(4, padding_mode="edge"),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
