@@ -168,7 +168,11 @@ class EI(pl.LightningModule):
                                                         patience=4,
                                                         factor=0.5)
 
-        return  {'optimizer': opt, 'lr_scheduler': sc}
+        return {
+            'optimizer': opt,
+            'lr_scheduler': sc,
+            "monitor": "metric_to_track"
+        }
 
     def train_dataloader(self):
 
