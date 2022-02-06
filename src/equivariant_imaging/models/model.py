@@ -22,17 +22,23 @@ class EI(pl.LightningModule):
                  g_up_channels: List[int],
                  g_down_dilations: List[int],
                  g_up_dilations: List[int],
+                 comp_ratio: int,
                  lr: float,
                  norm=False,
-                 alpha=0.5,
+                 alpha=1.,
                  batch_size=64):
-        """[summary]
+        """Equivariant-imaging class (model and data and training routine)
+
         Args:
             g_down_channels (List[int]): generator list of downsampling channels
             g_up_channels (List[int]): generator list of upsampling channels
             g_down_dilations (List[int]): generator list of down blocks dilations
             g_up_dilations (List[int]): generator list of up blocks dilations
+            comp_factor (int): compression factor (size of A ~ size image / comp_factor) (impacts size of A)
             lr (float): learning rate
+            norm (bool, optional): [description]. batchnorm to False.
+            alpha (float, optional): [description]. ratio between pseudo-inverse learning loss and the equivariance loss to 1.
+            batch_size (int, optional): batch size. Defaults to 64.
         """
         super(EI, self).__init__()
 
@@ -48,7 +54,10 @@ class EI(pl.LightningModule):
 
         # instantiate compressed sensing
 
-        self.cs = CS(512, 32**2, [1, 32, 32])
+        self.image_size = 32
+        self.comp_ratio = comp_ratio
+        self.cs = CS((self.image_size / self.comp_ratio)**2,
+                     self.image_size**2, [1, self.image_size, self.image_size])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
 
@@ -57,7 +66,6 @@ class EI(pl.LightningModule):
         self.val_idx = 0
 
         self.alpha = alpha
-
         self.batch_size = batch_size
 
         #Transform to resize the image and normalize
@@ -85,18 +93,16 @@ class EI(pl.LightningModule):
         x2 = self.T.apply(x1)
         x3 = self.f(self.cs.A(x2))
 
-        # print(
-        #     f"y : {y.shape}\n x1 : {x1.shape}\n x1 Transformed: {self.cs.A(x1).shape}\n x2 : {x2.shape}\n x3 : {x3.shape}\n"
-        # )
-        # input()
-
         return y, x1, x2, x3
 
     def __loss(self, y, x1, x2, x3):
+        """Compute the loss function (does not include the GAN loss)
+        """
 
-        return torch.nn.functional.mse_loss(
-            self.cs.A(x1),
-            y) + self.alpha * torch.nn.functional.mse_loss(x3, x2)
+        pinv_loss = torch.nn.functional.mse_loss(self.cs.A(x1), y)
+        ei_loss = torch.nn.functional.mse_loss(x3, x2)
+
+        return pinv_loss, ei_loss, pinv_loss + self.alpha * ei_loss
 
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
@@ -112,8 +118,10 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
-        loss = self.__loss(y, x1, x2, x3)
+        pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
 
+        self.log("train/pinv_loss", pinv_loss)
+        self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
         self.logger.experiment.add_image("train/original",
                                          self.invtransform(x[0]), self.val_idx)
@@ -133,9 +141,11 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
-        loss = self.__loss(y, x1, x2, x3)
+        pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
 
         # plot some images
+        self.log("valid/pinv_loss", pinv_loss)
+        self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
         self.logger.experiment.add_image("valid/original",
                                          self.invtransform(x[0]), self.val_idx)
