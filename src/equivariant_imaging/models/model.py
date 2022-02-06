@@ -163,8 +163,12 @@ class EI(pl.LightningModule):
         """
 
         opt = torch.optim.Adam(self.G.parameters(), lr=self.hparams.lr)
+        sc = torch.optim.lr_scheduler.ReduceLROnPlateau(opt,
+                                                        verbose=True,
+                                                        patience=4,
+                                                        factor=0.5)
 
-        return opt
+        return  {'optimizer': opt, 'lr_scheduler': sc}
 
     def train_dataloader(self):
 
