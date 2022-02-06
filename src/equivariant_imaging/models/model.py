@@ -56,7 +56,7 @@ class EI(pl.LightningModule):
 
         self.image_size = 32
         self.comp_ratio = comp_ratio
-        self.cs = CS((self.image_size / self.comp_ratio)**2,
+        self.cs = CS((self.image_size // self.comp_ratio)**2,
                      self.image_size**2, [1, self.image_size, self.image_size])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
