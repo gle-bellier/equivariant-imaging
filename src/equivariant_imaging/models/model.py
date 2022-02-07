@@ -77,7 +77,7 @@ class EI(pl.LightningModule):
         ])
 
         self.invtransform = transforms.Compose([
-            transforms.Lambda(lambda x : torch.add(torch.div(x,2),0.5))
+            # transforms.Lambda(lambda x : torch.add(torch.div(x,2),0.5))
             transforms.Normalize((0, ), (1 / 0.3081, )),
             transforms.Normalize((-0.1307, ), (1, )),
             transforms.CenterCrop(28),
