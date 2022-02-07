@@ -95,7 +95,8 @@ class EI(pl.LightningModule):
 
         return y, x1, x2, x3
 
-    def __loss(self, y, x1, x2, x3):
+    def __loss(self, y: torch.Tensor, x1: torch.Tensor, x2: torch.Tensor,
+               x3: torch.Tensor) -> Tuple[torch.Tensor]:
         """Compute the loss function (does not include the GAN loss)
         """
 
@@ -103,6 +104,21 @@ class EI(pl.LightningModule):
         ei_loss = torch.nn.functional.mse_loss(x3, x2)
 
         return pinv_loss, ei_loss, pinv_loss + self.alpha * ei_loss
+
+    def __PSNR(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """Compute the Peak Signal Noise Ratio to evaluate the quality 
+        of the reconstruction
+
+        Args:
+            x (torch.Tensor): original image
+            y (torch.Tensor): reconstructed image
+
+        Returns:
+            torch.Tensor: PSNR
+        """
+        # dynamic of the signal : in our case max of the image : 1.
+        d = 1.
+        return 10 * torch.log(1 / nn.functional.mse_loss(x, y))
 
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
@@ -119,7 +135,8 @@ class EI(pl.LightningModule):
         y, x1, x2, x3 = self(x)
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
-
+        psnr = self.__PSNR(x, x1)
+        self.log("train/PSNR", psnr)
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
@@ -142,8 +159,9 @@ class EI(pl.LightningModule):
         y, x1, x2, x3 = self(x)
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+        psnr = self.__PSNR(x, x1)
 
-        # plot some images
+        self.log("valid/PSNR", psnr)
         self.log("valid/pinv_loss", pinv_loss)
         self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
