@@ -73,7 +73,7 @@ class EI(pl.LightningModule):
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, )),
-            transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
+            # transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
         ])
 
         self.invtransform = transforms.Compose([
@@ -169,10 +169,10 @@ class EI(pl.LightningModule):
         self.log("valid/val_loss", loss)
         
         self.log("valid/max_in",torch.max(x[0]))
-        self.log("valid/min_in",torch.max(x[0]))
+        self.log("valid/min_in",torch.min(x[0]))
         
         self.log("valid/max_out",torch.max(x1[0]))
-        self.log("valid/min_out",torch.max(x1[0]))
+        self.log("valid/min_out",torch.min(x1[0]))
         
         self.logger.experiment.add_image("valid/original",
                                          self.invtransform(x[0]), self.val_idx)
