@@ -167,8 +167,16 @@ class EI(pl.LightningModule):
         self.log("valid/pinv_loss", pinv_loss)
         self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
+        
+        self.log("valid/max_in",torch.max(x[0]))
+        self.log("valid/min_in",torch.max(x[0]))
+        
+        self.log("valid/max_out",torch.max(x1[0]))
+        self.log("valid/min_out",torch.max(x1[0]))
+        
         self.logger.experiment.add_image("valid/original",
                                          self.invtransform(x[0]), self.val_idx)
+    
         self.logger.experiment.add_image("valid/reconstruct",
                                          self.invtransform(x1[0]),
                                          self.val_idx)
