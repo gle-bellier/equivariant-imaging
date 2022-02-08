@@ -155,7 +155,7 @@ class EI(pl.LightningModule):
         
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
-        self.log("train/val_loss", loss)
+        self.log("train/train_loss", loss)
         self.log("train/rec_loss", reconstruction_loss)
         
         self.log("train/max_in",torch.max(x[0]))
