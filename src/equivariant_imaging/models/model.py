@@ -136,7 +136,10 @@ class EI(pl.LightningModule):
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
         psnr = self.__PSNR(x, x1)
+        reconstruction_loss = nn.functional.mse_loss(x, x1)
+        
         self.log("train/PSNR", psnr)
+        self.log("train/rec_loss", reconstruction_loss)
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
@@ -160,8 +163,10 @@ class EI(pl.LightningModule):
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
         psnr = self.__PSNR(x, x1)
+        reconstruction_loss = nn.functional.mse_loss(x, x1)
 
         self.log("valid/PSNR", psnr)
+        self.log("valid/rec_loss", reconstruction_loss)
         self.log("valid/pinv_loss", pinv_loss)
         self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
@@ -170,6 +175,8 @@ class EI(pl.LightningModule):
         self.logger.experiment.add_image("valid/reconstruct",
                                          self.invtransform(x1[0]),
                                          self.val_idx)
+        self.logger.experiment.add_image("valid/pinv",
+                                         )
         self.val_idx += 1
 
         return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
