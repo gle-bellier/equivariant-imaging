@@ -144,11 +144,14 @@ class EI(pl.LightningModule):
         self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
         
-        self.log("valid/max_in",torch.max(x[0]))
-        self.log("valid/min_in",torch.min(x[0]))
+        self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
+        self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
         
-        self.log("valid/max_out",torch.max(x1[0]))
-        self.log("valid/min_out",torch.min(x1[0]))
+        self.log("train/max_in",torch.max(x[0]))
+        self.log("train/min_in",torch.min(x[0]))
+        
+        self.log("train/max_out",torch.max(x1[0]))
+        self.log("train/min_out",torch.min(x1[0]))
         
         self.logger.experiment.add_image("train/original",
                                          self.invtransform(x[0]), self.val_idx)
