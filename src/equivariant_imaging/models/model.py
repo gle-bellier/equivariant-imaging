@@ -74,11 +74,11 @@ class EI(pl.LightningModule):
             transforms.ToTensor(),
             # transforms.Normalize((0.5, ), (0.5, )),
             # transforms.Lambda(lambda x : torch.div(x,torch.linalg.matrix_norm(x, ord = 2 ))),
-            # transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
+            transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
         ])
 
         self.invtransform = transforms.Compose([
-            # transforms.Lambda(lambda x : torch.add(torch.div(x,2),0.5))
+            transforms.Lambda(lambda x : torch.add(torch.div(x,2),0.5))
             # transforms.Normalize((0, ), (1 / 0.5, )),
             # transforms.Normalize((-0.5, ), (1, )),
             transforms.CenterCrop(28),
