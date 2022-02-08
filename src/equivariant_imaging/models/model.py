@@ -175,8 +175,6 @@ class EI(pl.LightningModule):
         self.logger.experiment.add_image("valid/reconstruct",
                                          self.invtransform(x1[0]),
                                          self.val_idx)
-        self.logger.experiment.add_image("valid/pinv",
-                                         )
         self.val_idx += 1
 
         return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
