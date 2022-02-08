@@ -155,6 +155,7 @@ class EI(pl.LightningModule):
                     'max': torch.max(x1[0]),
                     'min': torch.min(x1[0])
                 },
+                global_step=self.val_idx,
             )
         
         self.logger.experiment.add_image("train/original",
@@ -196,6 +197,7 @@ class EI(pl.LightningModule):
                     'max': torch.max(x1[0]),
                     'min': torch.min(x1[0])
                 },
+                global_step=self.val_idx,
             )
         
         self.logger.experiment.add_image("valid/original",
