@@ -72,12 +72,11 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
+            # transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
         ])
 
         self.invtransform = transforms.Compose([
-            transforms.Normalize((0, ), (1 / 0.3081, )),
-            transforms.Normalize((-0.1307, ), (1, )),
+            # transforms.Lambda(lambda x : torch.add(torch.div(x, 2), 0.5)),
             transforms.CenterCrop(28)
         ])
 
@@ -118,10 +117,9 @@ class EI(pl.LightningModule):
         """
         # dynamic of the signal : in our case max of the image : 1.
         d = 1.
-        return 10 * torch.log(1 / nn.functional.mse_loss(x, y))
+        return 10 * torch.log10(1 / nn.functional.mse_loss(x, y)
 
-    def training_step(self, batch: List[torch.Tensor],
-                      batch_idx: int) -> OrderedDict:
+    def training_step(self, batch: List[torch.Tensor], batch_idx: int):
         """Compute a training step for generator or discriminator 
         (according to optimizer index)
         Args:
@@ -140,6 +138,16 @@ class EI(pl.LightningModule):
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
+        
+        self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
+        self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
+        
+        self.log("train/max_in",torch.max(x[0]))
+        self.log("train/min_in",torch.min(x[0]))
+        
+        self.log("train/max_out",torch.max(x1[0]))
+        self.log("train/min_out",torch.min(x1[0]))
+        
         self.logger.experiment.add_image("train/original",
                                          self.invtransform(x[0]), self.val_idx)
         self.logger.experiment.add_image("train/reconstruct",
@@ -165,8 +173,16 @@ class EI(pl.LightningModule):
         self.log("valid/pinv_loss", pinv_loss)
         self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
+        
+        self.log("valid/max_in",torch.max(x[0]))
+        self.log("valid/min_in",torch.min(x[0]))
+        
+        self.log("valid/max_out",torch.max(x1[0]))
+        self.log("valid/min_out",torch.min(x1[0]))
+        
         self.logger.experiment.add_image("valid/original",
                                          self.invtransform(x[0]), self.val_idx)
+    
         self.logger.experiment.add_image("valid/reconstruct",
                                          self.invtransform(x1[0]),
                                          self.val_idx)
