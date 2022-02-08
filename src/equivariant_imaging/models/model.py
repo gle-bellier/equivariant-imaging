@@ -64,6 +64,7 @@ class EI(pl.LightningModule):
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
         self.val_idx = 0
+        self.train_idx = 0
 
         self.alpha = alpha
         self.batch_size = batch_size
@@ -136,16 +137,19 @@ class EI(pl.LightningModule):
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
         psnr = self.__PSNR(x, x1)
-        self.log("train/PSNR", psnr)
-        self.log("train/pinv_loss", pinv_loss)
-        self.log("train/ei_loss", ei_loss)
-        self.log("train/train_loss", loss)
-        self.logger.experiment.add_image("train/original",
-                                         self.invtransform(x[0]), self.val_idx)
-        self.logger.experiment.add_image("train/reconstruct",
-                                         self.invtransform(x1[0]),
-                                         self.val_idx)
-        self.val_idx += 1
+
+        self.train_idx += 1
+        if self.train_idx % 100 == 0:
+            self.log("train/PSNR", psnr)
+            self.log("train/pinv_loss", pinv_loss)
+            self.log("train/ei_loss", ei_loss)
+            self.log("train/train_loss", loss)
+            self.logger.experiment.add_image("train/original",
+                                             self.invtransform(x[0]),
+                                             self.val_idx)
+            self.logger.experiment.add_image("train/reconstruct",
+                                             self.invtransform(x1[0]),
+                                             self.val_idx)
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
@@ -161,16 +165,18 @@ class EI(pl.LightningModule):
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
         psnr = self.__PSNR(x, x1)
 
-        self.log("valid/PSNR", psnr)
-        self.log("valid/pinv_loss", pinv_loss)
-        self.log("valid/ei_loss", ei_loss)
-        self.log("valid/val_loss", loss)
-        self.logger.experiment.add_image("valid/original",
-                                         self.invtransform(x[0]), self.val_idx)
-        self.logger.experiment.add_image("valid/reconstruct",
-                                         self.invtransform(x1[0]),
-                                         self.val_idx)
         self.val_idx += 1
+        if self.val_idx % 100 == 0:
+            self.log("valid/PSNR", psnr)
+            self.log("valid/pinv_loss", pinv_loss)
+            self.log("valid/ei_loss", ei_loss)
+            self.log("valid/val_loss", loss)
+            self.logger.experiment.add_image("valid/original",
+                                             self.invtransform(x[0]),
+                                             self.val_idx)
+            self.logger.experiment.add_image("valid/reconstruct",
+                                             self.invtransform(x1[0]),
+                                             self.val_idx)
 
         return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
 
