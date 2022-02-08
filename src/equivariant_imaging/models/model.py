@@ -140,11 +140,11 @@ class EI(pl.LightningModule):
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
-        self.logger.experiment.add_image("train/original",
-                                         self.invtransform(x[0]), self.val_idx)
-        self.logger.experiment.add_image("train/reconstruct",
-                                         self.invtransform(x1[0]),
-                                         self.val_idx)
+        #self.logger.experiment.add_image("train/original",
+                                         #self.invtransform(x[0]), self.val_idx)
+        #self.logger.experiment.add_image("train/reconstruct",
+                                         #self.invtransform(x1[0]),
+                                         #self.val_idx)
         self.val_idx += 1
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
