@@ -72,12 +72,15 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
+            #transforms.Normalize((0.1307, ), (0.3081, ))
+            transforms.Normalize((0.5, ), (0.5, ))
         ])
 
         self.invtransform = transforms.Compose([
-            transforms.Normalize((0, ), (1 / 0.3081, )),
-            transforms.Normalize((-0.1307, ), (1, )),
+            #transforms.Normalize((0, ), (1 / 0.3081, )),
+            transforms.Normalize((0, ), (1 / 0.5, )),
+            #transforms.Normalize((-0.1307, ), (1, )),
+            transforms.Normalize((-0.5, ), (1, )),
             transforms.CenterCrop(28)
         ])
 
@@ -198,6 +201,7 @@ class EI(pl.LightningModule):
                             train=True,
                             download=True,
                             transform=self.transform)
+        
         return DataLoader(mnist_train,
                           batch_size=self.batch_size,
                           shuffle=True)
@@ -208,6 +212,7 @@ class EI(pl.LightningModule):
                           train=False,
                           download=True,
                           transform=self.transform)
+        
         return DataLoader(mnist_val, batch_size=self.batch_size)
 
 
