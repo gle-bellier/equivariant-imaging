@@ -119,8 +119,7 @@ class EI(pl.LightningModule):
         d = 1.
         return 10 * torch.log10(1 / nn.functional.mse_loss(x, y)
 
-    def training_step(self, batch: List[torch.Tensor],
-                      batch_idx: int) -> OrderedDict:
+    def training_step(self, batch: List[torch.Tensor], batch_idx: int) -> OrderedDict:
         """Compute a training step for generator or discriminator 
         (according to optimizer index)
         Args:
