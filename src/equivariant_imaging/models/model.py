@@ -63,7 +63,6 @@ class EI(pl.LightningModule):
 
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
-        self.train_idx = 0
         self.val_idx = 0
 
         self.alpha = alpha
@@ -142,21 +141,13 @@ class EI(pl.LightningModule):
         reconstruction_loss = nn.functional.mse_loss(x, x1) #not used for the gradient descent
         
         psnr = self.__PSNR(x, x1)
-        psnr_pinv = self.__PSNR(x, pinv_rec)
-        
-        self.logger.experiment.add_scalars(
-                'train/PSNR',
-                {
-                    'Our': psnr,
-                    'Pinv': psnr_pinv
-                },
-                global_step=self.val_idx,
-            )
         
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
         self.log("train/train_loss", loss)
         self.log("train/rec_loss", reconstruction_loss)
+        
+        self.log("train/psnr", psnr)
         
         self.log("train/max_in",torch.max(x[0]))
         self.log("train/min_in",torch.min(x[0]))
@@ -165,18 +156,18 @@ class EI(pl.LightningModule):
         self.log("train/min_out",torch.min(x1[0]))
         
         self.logger.experiment.add_image("train/original",
-                                         self.invtransform(x[0]), self.train_idx)
+                                         self.invtransform(x[0]), self.val_idx)
         self.logger.experiment.add_image("train/reconstruct",
                                          self.invtransform(x1[0]),
-                                         self.train_idx)
+                                         self.val_idx)
         self.logger.experiment.add_image("train/pinv",
                                          self.invtransform(pinv_rec[0]),
-                                         self.train_idx)
-        self.train_idx += 1
+                                         self.val_idx)
+        self.val_idx += 1
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
-    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None :
         """Compute validation step (do some logging)
         Args:
             batch (torch.Tensor): batch
@@ -192,21 +183,13 @@ class EI(pl.LightningModule):
         reconstruction_loss = nn.functional.mse_loss(x, x1) #not used for the gradient descent
         
         psnr = self.__PSNR(x, x1)
-        psnr_pinv = self.__PSNR(x, pinv_rec)
-        
-        self.logger.experiment.add_scalars(
-                'valid/PSNR',
-                {
-                    'Our': psnr,
-                    'Pinv': psnr_pinv
-                },
-                global_step=self.val_idx,
-            )
         
         self.log("valid/pinv_loss", pinv_loss)
         self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
         self.log("valid/rec_loss", reconstruction_loss)
+        
+        self.log("valid/psnr", psnr)
         
         self.log("valid/max_in",torch.max(x[0]))
         self.log("valid/min_in",torch.min(x[0]))
