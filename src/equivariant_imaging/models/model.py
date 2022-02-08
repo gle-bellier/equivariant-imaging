@@ -117,7 +117,7 @@ class EI(pl.LightningModule):
         """
         # dynamic of the signal : in our case max of the image : 1.
         d = 1.
-        return 10 * torch.log(1 / nn.functional.mse_loss(x, y))
+        return 10 * torch.log10(1 / nn.functional.mse_loss(self.invtransform(x), self.invtransform(y))
 
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
