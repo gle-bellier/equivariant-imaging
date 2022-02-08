@@ -142,7 +142,7 @@ class EI(pl.LightningModule):
             self.log("train/ei_loss", ei_loss)
             self.log("train/train_loss", loss)
             self.logger.experiment.add_scalars(
-                'PSNR',
+                'train/PSNR',
                 {
                     'Our': psnr,
                     'Pinv': psnr_pinv
