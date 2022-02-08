@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+
 from typing import List, Tuple, OrderedDict
 
 import pytorch_lightning as pl
@@ -21,17 +22,23 @@ class EI(pl.LightningModule):
                  g_up_channels: List[int],
                  g_down_dilations: List[int],
                  g_up_dilations: List[int],
+                 comp_ratio: int,
                  lr: float,
                  norm=False,
-                 alpha=0.5,
+                 alpha=1.,
                  batch_size=64):
-        """[summary]
+        """Equivariant-imaging class (model and data and training routine)
+
         Args:
             g_down_channels (List[int]): generator list of downsampling channels
             g_up_channels (List[int]): generator list of upsampling channels
             g_down_dilations (List[int]): generator list of down blocks dilations
             g_up_dilations (List[int]): generator list of up blocks dilations
+            comp_factor (int): compression factor (size of A ~ size image / comp_factor) (impacts size of A)
             lr (float): learning rate
+            norm (bool, optional): [description]. batchnorm to False.
+            alpha (float, optional): [description]. ratio between pseudo-inverse learning loss and the equivariance loss to 1.
+            batch_size (int, optional): batch size. Defaults to 64.
         """
         super(EI, self).__init__()
 
@@ -47,7 +54,10 @@ class EI(pl.LightningModule):
 
         # instantiate compressed sensing
 
-        self.cs = CS(512, 32**2, [1, 32, 32])
+        self.image_size = 32
+        self.comp_ratio = comp_ratio
+        self.cs = CS((self.image_size // self.comp_ratio)**2,
+                     self.image_size**2, [1, self.image_size, self.image_size])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
 
@@ -56,20 +66,19 @@ class EI(pl.LightningModule):
         self.val_idx = 0
 
         self.alpha = alpha
-
         self.batch_size = batch_size
-        
+
         #Transform to resize the image and normalize
         self.transform = transforms.Compose([
-            transforms.Resize(32),
+            transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ])
-        
+
         self.invtransform = transforms.Compose([
-            transforms.Normalize((0, ), (1/0.3081, )),
-            transforms.Normalize((-0.1307,),(1,)),
-            transforms.Resize(28)
+            transforms.Normalize((0, ), (1 / 0.3081, )),
+            transforms.Normalize((-0.1307, ), (1, )),
+            transforms.CenterCrop(28)
         ])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
@@ -84,18 +93,32 @@ class EI(pl.LightningModule):
         x2 = self.T.apply(x1)
         x3 = self.f(self.cs.A(x2))
 
-        # print(
-        #     f"y : {y.shape}\n x1 : {x1.shape}\n x1 Transformed: {self.cs.A(x1).shape}\n x2 : {x2.shape}\n x3 : {x3.shape}\n"
-        # )
-        # input()
-
         return y, x1, x2, x3
 
-    def __loss(self, y, x1, x2, x3):
+    def __loss(self, y: torch.Tensor, x1: torch.Tensor, x2: torch.Tensor,
+               x3: torch.Tensor) -> Tuple[torch.Tensor]:
+        """Compute the loss function (does not include the GAN loss)
+        """
 
-        return torch.nn.functional.mse_loss(
-            self.cs.A(x1),
-            y) + self.alpha * torch.nn.functional.mse_loss(x3, x2)
+        pinv_loss = torch.nn.functional.mse_loss(self.cs.A(x1), y)
+        ei_loss = torch.nn.functional.mse_loss(x3, x2)
+
+        return pinv_loss, ei_loss, pinv_loss + self.alpha * ei_loss
+
+    def __PSNR(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """Compute the Peak Signal Noise Ratio to evaluate the quality 
+        of the reconstruction
+
+        Args:
+            x (torch.Tensor): original image
+            y (torch.Tensor): reconstructed image
+
+        Returns:
+            torch.Tensor: PSNR
+        """
+        # dynamic of the signal : in our case max of the image : 1.
+        d = 1.
+        return 10 * torch.log(1 / nn.functional.mse_loss(x, y))
 
     def training_step(self, batch: List[torch.Tensor],
                       batch_idx: int) -> OrderedDict:
@@ -111,13 +134,17 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
-        loss = self.__loss(y, x1, x2, x3)
-
-        self.log("train_loss", loss)
-        self.logger.experiment.add_image("train/original", self.invtransform(x[0]), self.val_idx)
-        self.logger.experiment.add_image("train/reconstruct", self.invtransform(x1[0]),
+        pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+        psnr = self.__PSNR(x, x1)
+        self.log("train/PSNR", psnr)
+        self.log("train/pinv_loss", pinv_loss)
+        self.log("train/ei_loss", ei_loss)
+        self.log("train/train_loss", loss)
+        self.logger.experiment.add_image("train/original",
+                                         self.invtransform(x[0]), self.val_idx)
+        self.logger.experiment.add_image("train/reconstruct",
+                                         self.invtransform(x1[0]),
                                          self.val_idx)
-        self.logger.experiment.add_
         self.val_idx += 1
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
@@ -131,12 +158,17 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
-        loss = self.__loss(y, x1, x2, x3)
+        pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+        psnr = self.__PSNR(x, x1)
 
-        # plot some images
-        self.log("val_loss", loss)
-        self.logger.experiment.add_image("valid/original", self.invtransform(x[0]), self.val_idx)
-        self.logger.experiment.add_image("valid/reconstruct", self.invtransform(x1[0]),
+        self.log("valid/PSNR", psnr)
+        self.log("valid/pinv_loss", pinv_loss)
+        self.log("valid/ei_loss", ei_loss)
+        self.log("valid/val_loss", loss)
+        self.logger.experiment.add_image("valid/original",
+                                         self.invtransform(x[0]), self.val_idx)
+        self.logger.experiment.add_image("valid/reconstruct",
+                                         self.invtransform(x1[0]),
                                          self.val_idx)
         self.val_idx += 1
 
@@ -149,11 +181,19 @@ class EI(pl.LightningModule):
         """
 
         opt = torch.optim.Adam(self.G.parameters(), lr=self.hparams.lr)
+        sc = torch.optim.lr_scheduler.ReduceLROnPlateau(opt,
+                                                        verbose=True,
+                                                        patience=4,
+                                                        factor=0.5)
 
-        return opt
+        return {
+            'optimizer': opt,
+            'lr_scheduler': sc,
+            "monitor": "train/train_loss"
+        }
 
     def train_dataloader(self):
-        
+
         mnist_train = MNIST('./data/',
                             train=True,
                             download=True,
@@ -163,7 +203,7 @@ class EI(pl.LightningModule):
                           shuffle=True)
 
     def val_dataloader(self):
-        
+
         mnist_val = MNIST('./data/',
                           train=False,
                           download=True,
