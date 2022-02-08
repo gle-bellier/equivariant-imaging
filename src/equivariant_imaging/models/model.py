@@ -157,6 +157,9 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
+        # compute reconstruction only with pseudo inverse
+        pinv_rec = self.cs.A_dagger(y)
+
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
         psnr = self.__PSNR(x, x1)
 
@@ -168,6 +171,9 @@ class EI(pl.LightningModule):
             self.log("valid/val_loss", loss)
             self.logger.experiment.add_image("valid/original",
                                              self.invtransform(x[0]),
+                                             self.val_idx)
+            self.logger.experiment.add_image("valid/pinv",
+                                             self.invtransform(pinv_rec[0]),
                                              self.val_idx)
             self.logger.experiment.add_image("valid/reconstruct",
                                              self.invtransform(x1[0]),
