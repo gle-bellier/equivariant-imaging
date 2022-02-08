@@ -73,7 +73,7 @@ class EI(pl.LightningModule):
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
             #transforms.Normalize((0.1307, ), (0.3081, ))
-            transforms.Normalize((0.5, ), (-0.5, ))
+            transforms.Normalize((0.5, ), (0.5, ))
         ])
 
         self.invtransform = transforms.Compose([
@@ -175,6 +175,9 @@ class EI(pl.LightningModule):
                                          self.invtransform(x[0]), self.val_idx)
         self.logger.experiment.add_image("valid/reconstruct",
                                          self.invtransform(x1[0]),
+                                         self.val_idx)
+        self.logger.experiment.add_image("valid/y_p_inv",
+                                         self.invtransform(self.cs.A_dagger(y)[0]),
                                          self.val_idx)
         self.val_idx += 1
 
