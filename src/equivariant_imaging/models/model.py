@@ -63,6 +63,7 @@ class EI(pl.LightningModule):
 
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
+        self.train_idx = 0
         self.val_idx = 0
 
         self.alpha = alpha
@@ -134,21 +135,44 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
-        pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
-        psnr = self.__PSNR(x, x1)
-        reconstruction_loss = nn.functional.mse_loss(x, x1)
+        # compute reconstruction only with pseudo inverse
+        pinv_rec = self.cs.A_dagger(y)
         
-        self.log("train/PSNR", psnr)
-        self.log("train/rec_loss", reconstruction_loss)
+        pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+        reconstruction_loss = nn.functional.mse_loss(x, x1) #not used for the gradient descent
+        
+        psnr = self.__PSNR(x, x1)
+        psnr_pinv = self.__PSNR(x, pinv_rec)
+        
+        self.logger.experiment.add_scalars(
+                'train/PSNR',
+                {
+                    'Our': psnr,
+                    'Pinv': psnr_pinv
+                },
+                global_step=self.val_idx,
+            )
+        
         self.log("train/pinv_loss", pinv_loss)
         self.log("train/ei_loss", ei_loss)
-        self.log("train/train_loss", loss)
-        #self.logger.experiment.add_image("train/original",
-                                         #self.invtransform(x[0]), self.val_idx)
-        #self.logger.experiment.add_image("train/reconstruct",
-                                         #self.invtransform(x1[0]),
-                                         #self.val_idx)
-        self.val_idx += 1
+        self.log("train/val_loss", loss)
+        self.log("train/rec_loss", reconstruction_loss)
+        
+        self.log("train/max_in",torch.max(x[0]))
+        self.log("train/min_in",torch.min(x[0]))
+        
+        self.log("train/max_out",torch.max(x1[0]))
+        self.log("train/min_out",torch.min(x1[0]))
+        
+        self.logger.experiment.add_image("train/original",
+                                         self.invtransform(x[0]), self.train_idx)
+        self.logger.experiment.add_image("train/reconstruct",
+                                         self.invtransform(x1[0]),
+                                         self.train_idx)
+        self.logger.experiment.add_image("train/pinv",
+                                         self.invtransform(pinv_rec[0]),
+                                         self.train_idx)
+        self.train_idx += 1
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
@@ -161,19 +185,42 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
+        # compute reconstruction only with pseudo inverse
+        pinv_rec = self.cs.A_dagger(y)
+        
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+        reconstruction_loss = nn.functional.mse_loss(x, x1) #not used for the gradient descent
+        
         psnr = self.__PSNR(x, x1)
-        reconstruction_loss = nn.functional.mse_loss(x, x1)
-
-        self.log("valid/PSNR", psnr)
-        self.log("valid/rec_loss", reconstruction_loss)
+        psnr_pinv = self.__PSNR(x, pinv_rec)
+        
+        self.logger.experiment.add_scalars(
+                'valid/PSNR',
+                {
+                    'Our': psnr,
+                    'Pinv': psnr_pinv
+                },
+                global_step=self.val_idx,
+            )
+        
         self.log("valid/pinv_loss", pinv_loss)
         self.log("valid/ei_loss", ei_loss)
         self.log("valid/val_loss", loss)
+        self.log("valid/rec_loss", reconstruction_loss)
+        
+        self.log("valid/max_in",torch.max(x[0]))
+        self.log("valid/min_in",torch.min(x[0]))
+        
+        self.log("valid/max_out",torch.max(x1[0]))
+        self.log("valid/min_out",torch.min(x1[0]))
+        
         self.logger.experiment.add_image("valid/original",
                                          self.invtransform(x[0]), self.val_idx)
         self.logger.experiment.add_image("valid/reconstruct",
                                          self.invtransform(x1[0]),
+                                         self.val_idx)
+        self.logger.experiment.add_image("valid/pinv",
+                                         self.invtransform(pinv_rec[0]),
                                          self.val_idx)
         self.val_idx += 1
 
