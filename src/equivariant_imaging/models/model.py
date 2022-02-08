@@ -129,16 +129,26 @@ class EI(pl.LightningModule):
 
         x, label = batch
         y, x1, x2, x3 = self(x)
+        pinv_rec = self.cs.A_dagger(y)
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+
         psnr = self.__PSNR(x, x1)
+        psnr_pinv = self.__PSNR(x, pinv_rec)
 
         self.train_idx += 1
         if self.train_idx % 100 == 0:
-            self.log("train/PSNR", psnr)
             self.log("train/pinv_loss", pinv_loss)
             self.log("train/ei_loss", ei_loss)
             self.log("train/train_loss", loss)
+            self.logger.experiment.add_scalars(
+                'PSNR',
+                {
+                    'Our': psnr,
+                    'Pinv': psnr_pinv
+                },
+                global_step=self.val_idx,
+            )
             self.logger.experiment.add_image("train/original",
                                              self.invtransform(x[0]),
                                              self.val_idx)
@@ -159,16 +169,25 @@ class EI(pl.LightningModule):
 
         # compute reconstruction only with pseudo inverse
         pinv_rec = self.cs.A_dagger(y)
-
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+
         psnr = self.__PSNR(x, x1)
+        psnr_pinv = self.__PSNR(x, pinv_rec)
 
         self.val_idx += 1
         if self.val_idx % 100 == 0:
-            self.log("valid/PSNR", psnr)
             self.log("valid/pinv_loss", pinv_loss)
             self.log("valid/ei_loss", ei_loss)
             self.log("valid/val_loss", loss)
+
+            self.logger.experiment.add_scalars(
+                'valid/PSNR',
+                {
+                    'Our': psnr,
+                    'Pinv': psnr_pinv
+                },
+                global_step=self.val_idx,
+            )
             self.logger.experiment.add_image("valid/original",
                                              self.invtransform(x[0]),
                                              self.val_idx)
