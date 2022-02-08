@@ -51,9 +51,6 @@ class EI(pl.LightningModule):
                       down_dilations=g_down_dilations,
                       up_dilations=g_up_dilations,
                       norm=norm)
-        
-        self.original_size = original_size
-        self.compress_size = compress_size
 
         # instantiate compressed sensing
 
