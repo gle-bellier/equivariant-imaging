@@ -149,11 +149,13 @@ class EI(pl.LightningModule):
         
         self.log("train/psnr", psnr)
         
-        self.log("train/max_in",torch.max(x[0]))
-        self.log("train/min_in",torch.min(x[0]))
-        
-        self.log("train/max_out",torch.max(x1[0]))
-        self.log("train/min_out",torch.min(x1[0]))
+        self.logger.experiment.add_scalars(
+                'train/value_out',
+                {
+                    'max': torch.max(x1[0]),
+                    'min': torch.min(x1[0])
+                },
+            )
         
         self.logger.experiment.add_image("train/original",
                                          self.invtransform(x[0]), self.val_idx)
@@ -191,11 +193,13 @@ class EI(pl.LightningModule):
         
         self.log("valid/psnr", psnr)
         
-        self.log("valid/max_in",torch.max(x[0]))
-        self.log("valid/min_in",torch.min(x[0]))
-        
-        self.log("valid/max_out",torch.max(x1[0]))
-        self.log("valid/min_out",torch.min(x1[0]))
+        self.logger.experiment.add_scalars(
+                'valid/value_out',
+                {
+                    'max': torch.max(x1[0]),
+                    'min': torch.min(x1[0])
+                },
+            )
         
         self.logger.experiment.add_image("valid/original",
                                          self.invtransform(x[0]), self.val_idx)
