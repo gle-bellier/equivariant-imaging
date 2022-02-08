@@ -81,7 +81,7 @@ class EI(pl.LightningModule):
             transforms.Lambda(lambda x : torch.add(torch.div(x,2),0.5)),
             # transforms.Normalize((0, ), (1 / 0.5, )),
             # transforms.Normalize((-0.5, ), (1, )),
-            transforms.CenterCrop(28),
+            transforms.CenterCrop(28)
         ])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
