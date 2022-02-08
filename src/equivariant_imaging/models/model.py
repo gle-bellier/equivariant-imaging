@@ -73,14 +73,9 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
-            transforms.Normalize((0.1307, ), (0.3081, ))
         ])
 
-        self.invtransform = transforms.Compose([
-            transforms.Normalize((0, ), (1 / 0.3081, )),
-            transforms.Normalize((-0.1307, ), (1, )),
-            transforms.CenterCrop(28)
-        ])
+        self.invtransform = transforms.Compose([transforms.CenterCrop(28)])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
