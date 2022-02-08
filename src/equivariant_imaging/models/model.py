@@ -72,11 +72,11 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
-            transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
+            # transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
         ])
 
         self.invtransform = transforms.Compose([
-            transforms.Lambda(lambda x : torch.add(torch.div(x, 2), 0.5)),
+            # transforms.Lambda(lambda x : torch.add(torch.div(x, 2), 0.5)),
             transforms.CenterCrop(28)
         ])
 
@@ -119,7 +119,7 @@ class EI(pl.LightningModule):
         d = 1.
         return 10 * torch.log10(1 / nn.functional.mse_loss(x, y))
 
-    def training_step(self, batch: List[torch.Tensor], batch_idx: int) -> OrderedDict:
+    def training_step(self, batch: List[torch.Tensor], batch_idx: int):
         """Compute a training step for generator or discriminator 
         (according to optimizer index)
         Args:
