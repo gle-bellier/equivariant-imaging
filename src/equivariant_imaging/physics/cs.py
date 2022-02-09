@@ -2,6 +2,8 @@ import torch
 import os
 import numpy as np
 
+rng = np.random.default_rng(123)
+
 # source : https://colab.research.google.com/github/edongdongchen/EI/blob/main/ei_demo_cs_usps.ipynb#scrollTo=razUOZiJy_ip
 
 
@@ -16,7 +18,7 @@ class CS():
         if os.path.exists(fname):
             A, A_dagger = torch.load(fname)
         else:
-            A = np.random.randn(d, D) / np.sqrt(d)
+            A = rng.randn(d, D) / np.sqrt(d)
             A_dagger = np.linalg.pinv(A)
             torch.save([A, A_dagger], fname)
             print('CS matrix has been created and saved at {}'.format(fname))
