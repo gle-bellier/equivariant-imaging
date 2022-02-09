@@ -2,7 +2,7 @@ import torch
 import os
 import numpy as np
 
-rng = np.random.default_rng(123)
+rng = np.random.default_rng(321)
 
 # source : https://colab.research.google.com/github/edongdongchen/EI/blob/main/ei_demo_cs_usps.ipynb#scrollTo=razUOZiJy_ip
 
