@@ -18,7 +18,7 @@ class CS():
         if os.path.exists(fname):
             A, A_dagger = torch.load(fname)
         else:
-            A = rng.randn(d, D) / np.sqrt(d)
+            A = rng.normal(size=(d, D)) / np.sqrt(d)
             A_dagger = np.linalg.pinv(A)
             torch.save([A, A_dagger], fname)
             print('CS matrix has been created and saved at {}'.format(fname))
