@@ -64,6 +64,7 @@ class EI(pl.LightningModule):
         self.f = lambda y: self.G(self.cs.A_dagger(y))
 
         self.val_idx = 0
+        self.train_idx = 0
 
         self.alpha = alpha
         self.batch_size = batch_size
@@ -72,13 +73,12 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
-            # transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
+
         ])
 
-        self.invtransform = transforms.Compose([
-            # transforms.Lambda(lambda x : torch.add(torch.div(x, 2), 0.5)),
-            transforms.CenterCrop(28)
-        ])
+        self.invtransform = transforms.Compose([transforms.CenterCrop(28)])
+
+
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
@@ -117,7 +117,9 @@ class EI(pl.LightningModule):
         """
         # dynamic of the signal : in our case max of the image : 1.
         d = 1.
-        return 10 * torch.log10(1 / nn.functional.mse_loss(x, y))
+
+        return 10 * torch.log10(d / nn.functional.mse_loss(x, y))
+
 
     def training_step(self, batch: List[torch.Tensor], batch_idx: int):
         """Compute a training step for generator or discriminator 
@@ -131,29 +133,33 @@ class EI(pl.LightningModule):
 
         x, label = batch
         y, x1, x2, x3 = self(x)
+        pinv_rec = self.cs.A_dagger(y)
 
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
+
         psnr = self.__PSNR(x, x1)
-        self.log("train/PSNR", psnr)
-        self.log("train/pinv_loss", pinv_loss)
-        self.log("train/ei_loss", ei_loss)
-        self.log("train/train_loss", loss)
-        
-        self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
-        self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
-        
-        self.log("train/max_in",torch.max(x[0]))
-        self.log("train/min_in",torch.min(x[0]))
-        
-        self.log("train/max_out",torch.max(x1[0]))
-        self.log("train/min_out",torch.min(x1[0]))
-        
-        self.logger.experiment.add_image("train/original",
-                                         self.invtransform(x[0]), self.val_idx)
-        self.logger.experiment.add_image("train/reconstruct",
-                                         self.invtransform(x1[0]),
-                                         self.val_idx)
-        self.val_idx += 1
+        psnr_pinv = self.__PSNR(x, pinv_rec)
+
+        self.train_idx += 1
+        if self.train_idx % 100 == 0:
+            self.log("train/pinv_loss", pinv_loss)
+            self.log("train/ei_loss", ei_loss)
+            self.log("train/train_loss", loss)
+            self.logger.experiment.add_scalars(
+                'train/PSNR',
+                {
+                    'Our': psnr,
+                    'Pinv': psnr_pinv
+                },
+                global_step=self.val_idx,
+            )
+            self.logger.experiment.add_image("train/original",
+                                             self.invtransform(x[0]),
+                                             self.val_idx)
+            self.logger.experiment.add_image("train/reconstruct",
+                                             self.invtransform(x1[0]),
+                                             self.val_idx)
+
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
@@ -166,27 +172,37 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
 
+        # compute reconstruction only with pseudo inverse
+        pinv_rec = self.cs.A_dagger(y)
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
-        psnr = self.__PSNR(x, x1)
 
-        self.log("valid/PSNR", psnr)
-        self.log("valid/pinv_loss", pinv_loss)
-        self.log("valid/ei_loss", ei_loss)
-        self.log("valid/val_loss", loss)
-        
-        self.log("valid/max_in",torch.max(x[0]))
-        self.log("valid/min_in",torch.min(x[0]))
-        
-        self.log("valid/max_out",torch.max(x1[0]))
-        self.log("valid/min_out",torch.min(x1[0]))
-        
-        self.logger.experiment.add_image("valid/original",
-                                         self.invtransform(x[0]), self.val_idx)
-    
-        self.logger.experiment.add_image("valid/reconstruct",
-                                         self.invtransform(x1[0]),
-                                         self.val_idx)
+        psnr = self.__PSNR(x, x1)
+        psnr_pinv = self.__PSNR(x, pinv_rec)
+
+
         self.val_idx += 1
+        if self.val_idx % 100 == 0:
+            self.log("valid/pinv_loss", pinv_loss)
+            self.log("valid/ei_loss", ei_loss)
+            self.log("valid/val_loss", loss)
+
+            self.logger.experiment.add_scalars(
+                'valid/PSNR',
+                {
+                    'Our': psnr,
+                    'Pinv': psnr_pinv
+                },
+                global_step=self.val_idx,
+            )
+            self.logger.experiment.add_image("valid/original",
+                                             self.invtransform(x[0]),
+                                             self.val_idx)
+            self.logger.experiment.add_image("valid/pinv",
+                                             self.invtransform(pinv_rec[0]),
+                                             self.val_idx)
+            self.logger.experiment.add_image("valid/reconstruct",
+                                             self.invtransform(x1[0]),
+                                             self.val_idx)
 
         return dict(validation_loss=loss, log=dict(val_loss=loss.detach()))
 
