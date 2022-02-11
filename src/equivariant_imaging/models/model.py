@@ -73,9 +73,12 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
+
         ])
 
         self.invtransform = transforms.Compose([transforms.CenterCrop(28)])
+
+
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
@@ -114,10 +117,11 @@ class EI(pl.LightningModule):
         """
         # dynamic of the signal : in our case max of the image : 1.
         d = 1.
+
         return 10 * torch.log10(d / nn.functional.mse_loss(x, y))
 
-    def training_step(self, batch: List[torch.Tensor],
-                      batch_idx: int) -> OrderedDict:
+
+    def training_step(self, batch: List[torch.Tensor], batch_idx: int):
         """Compute a training step for generator or discriminator 
         (according to optimizer index)
         Args:
@@ -156,6 +160,7 @@ class EI(pl.LightningModule):
                                              self.invtransform(x1[0]),
                                              self.val_idx)
 
+
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
@@ -173,6 +178,7 @@ class EI(pl.LightningModule):
 
         psnr = self.__PSNR(x, x1)
         psnr_pinv = self.__PSNR(x, pinv_rec)
+
 
         self.val_idx += 1
         if self.val_idx % 100 == 0:
