@@ -56,8 +56,8 @@ class EI(pl.LightningModule):
 
         self.image_size = 32
         self.comp_ratio = comp_ratio
-        self.cs = CS((self.image_size // self.comp_ratio)**2,
-                     self.image_size**2, [1, self.image_size, self.image_size])
+        self.cs = CS((self.image_size // self.comp_ratio),
+                     self.image_size, [1, self.image_size, self.image_size])
         # instantiate tranformation
         self.T = Shift(n_trans=2)
 
@@ -72,7 +72,7 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
-            transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
+            # transforms.Lambda(lambda x : torch.mul(torch.add(x, -0.5),2))
         ])
 
         self.invtransform = transforms.Compose([
