@@ -77,7 +77,10 @@ class EI(pl.LightningModule):
 
         ])
 
-        self.invtransform = transforms.Compose([transforms.CenterCrop(28)])
+        self.invtransform = transforms.Compose([
+            transforms.Normalize((0, ), (1 / 0.5, )),
+            transforms.Normalize((-0.5, ), (1, )),
+            transforms.CenterCrop(28)])
 
 
 
@@ -142,7 +145,7 @@ class EI(pl.LightningModule):
         psnr_pinv = self.__PSNR(x, pinv_rec)
 
         self.train_idx += 1
-        if self.train_idx % 100 == 0:
+        if self.train_idx % 30 == 0:
             self.log("train/pinv_loss", pinv_loss)
             self.log("train/ei_loss", ei_loss)
             self.log("train/train_loss", loss)
