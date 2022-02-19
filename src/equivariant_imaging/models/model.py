@@ -73,6 +73,7 @@ class EI(pl.LightningModule):
         self.transform = transforms.Compose([
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
+            transforms.Normalize((0.5, ), (0.5, ))
 
         ])
 
