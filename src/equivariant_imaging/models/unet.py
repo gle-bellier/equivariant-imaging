@@ -37,7 +37,7 @@ class Unet(nn.Module):
                       kernel_size=3,
                       stride=1,
                       padding=1),
-            nn.Tanh())
+            nn.Sigmoid()) # nn.Tanh())
 
     def forward(self, x):
 
