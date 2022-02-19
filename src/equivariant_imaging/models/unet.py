@@ -36,7 +36,7 @@ class Unet(nn.Module):
                       up_channels[-1],
                       kernel_size=3,
                       stride=1,
-                      padding=1))
+                      padding=1), nn.Tanh())
 
     def forward(self, x):
 
