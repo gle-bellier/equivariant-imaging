@@ -160,6 +160,15 @@ class EI(pl.LightningModule):
             self.logger.experiment.add_image("train/reconstruct",
                                              self.invtransform(x1[0]),
                                              self.val_idx)
+            
+            self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
+            self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
+        
+            self.log("train/max_in",torch.max(x[0]))
+            self.log("train/min_in",torch.min(x[0]))
+        
+            self.log("train/max_out",torch.max(x1[0]))
+            self.log("train/min_out",torch.min(x1[0]))
 
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
