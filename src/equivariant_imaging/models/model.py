@@ -145,7 +145,7 @@ class EI(pl.LightningModule):
         psnr_pinv = self.__PSNR(x, pinv_rec)
 
         self.train_idx += 1
-        if self.train_idx % 30 == 0:
+        if self.train_idx % 100 == 0:
             self.log("train/pinv_loss", pinv_loss)
             self.log("train/ei_loss", ei_loss)
             self.log("train/train_loss", loss)
