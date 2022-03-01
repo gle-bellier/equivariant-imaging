@@ -74,22 +74,19 @@ class EI(pl.LightningModule):
             transforms.Pad(2, padding_mode="edge"),
             transforms.ToTensor(),
             # transforms.Normalize((0.5, ), (0.5, ))
-
         ])
 
         self.invtransform = transforms.Compose([
             # transforms.Normalize((0, ), (1 / 0.5, )),
             # transforms.Normalize((-0.5, ), (1, )),
-            transforms.CenterCrop(28)])
-
-
+            transforms.CenterCrop(28)
+        ])
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor]:
         """
         Compute pass forward
         """
         y = self.cs.A(x)
-
         # training routine
 
         x1 = self.f(y)
@@ -123,7 +120,6 @@ class EI(pl.LightningModule):
         d = 1.
 
         return 10 * torch.log10(d / nn.functional.mse_loss(x, y))
-
 
     def training_step(self, batch: List[torch.Tensor], batch_idx: int):
         """Compute a training step for generator or discriminator 
@@ -163,16 +159,17 @@ class EI(pl.LightningModule):
             self.logger.experiment.add_image("train/reconstruct",
                                              self.invtransform(x1[0]),
                                              self.val_idx)
-            
+
+            self.logger.experiment.add_image("compressed", y, self.val_idx)
+
             # self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
             # self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
-        
+
             # self.log("train/max_in",torch.max(x[0]))
             # self.log("train/min_in",torch.min(x[0]))
-        
+
             # self.log("train/max_out",torch.max(x1[0]))
             # self.log("train/min_out",torch.min(x1[0]))
-
 
         return dict(loss=loss, log=dict(train_loss=loss.detach()))
 
@@ -191,7 +188,6 @@ class EI(pl.LightningModule):
 
         psnr = self.__PSNR(x, x1)
         psnr_pinv = self.__PSNR(x, pinv_rec)
-
 
         self.val_idx += 1
         if self.val_idx % 100 == 0:
