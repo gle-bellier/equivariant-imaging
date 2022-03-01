@@ -134,7 +134,6 @@ class EI(pl.LightningModule):
         x, label = batch
         y, x1, x2, x3 = self(x)
         pinv_rec = self.cs.A_dagger(y)
-
         pinv_loss, ei_loss, loss = self.__loss(y, x1, x2, x3)
 
         psnr = self.__PSNR(x, x1)
@@ -160,7 +159,7 @@ class EI(pl.LightningModule):
                                              self.invtransform(x1[0]),
                                              self.val_idx)
 
-            #self.logger.experiment.add_image("compressed", y, self.val_idx)
+            self.logger.experiment.add_image("compressed", y.reshape(y.shape[0], 32, 32), self.val_idx)
 
             # self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
             # self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
@@ -263,6 +262,7 @@ if __name__ == "__main__":
                g_up_dilations=[1, 1, 1, 1],
                lr=lr,
                alpha=0.5,
+               comp_ratio=2,
                batch_size=8)
 
     trainer = pl.Trainer(gpus=0, max_epochs=10000)
