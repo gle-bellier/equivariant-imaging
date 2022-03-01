@@ -159,9 +159,9 @@ class EI(pl.LightningModule):
                                              self.invtransform(x1[0]),
                                              self.val_idx)
 
-            self.logger.experiment.add_image(
-                "compressed", y.reshape(y.shape[0], 32, y.shape[0] // 32),
-                self.val_idx)
+            # self.logger.experiment.add_image(
+            #     "compressed", y.reshape(y.shape[0], 32, y.shape[0] // 32),
+            #     self.val_idx)
 
             # self.log("train/max_in_g", torch.max(self.cs.A_dagger(y)[0]))
             # self.log("train/min_in_g", torch.min(self.cs.A_dagger(y)[0]))
